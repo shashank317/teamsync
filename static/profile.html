@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-100 dark:bg-gray-900">
+<head>
+  <meta charset="UTF-8" />
+  <title>Update Profile – TeamSync</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: { fontFamily: { inter: ['Inter', 'sans-serif'] } }
+      }
+    };
+  </script>
+  <style>* { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex items-center justify-center min-h-screen text-gray-900 dark:text-white">
+  <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md">
+    <h2 class="text-2xl font-bold mb-6 text-center">👤 Update Profile</h2>
+
+    <div id="msgBox" class="text-sm mb-4 hidden"></div>
+
+    <input id="name" type="text" placeholder="New Name" class="w-full mb-3 px-4 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
+    <input id="email" type="email" placeholder="New Email" class="w-full mb-3 px-4 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
+
+    <hr class="my-4 border-gray-600" />
+
+    <input id="currentPassword" type="password" placeholder="Current Password" class="w-full mb-3 px-4 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
+    <input id="newPassword" type="password" placeholder="New Password" class="w-full mb-4 px-4 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
+
+    <button onclick="updateProfile()" class="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 transition">
+      💾 Save Changes
+    </button>
+
+    <p class="text-sm mt-4 text-center"><a href="/static/dashboard.html" class="text-indigo-500 hover:underline">← Back to Dashboard</a></p>
+  </div>
+
+  <script>
+    const token = localStorage.getItem("access_token");
+
+    async function updateProfile() {
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const currentPassword = document.getElementById("currentPassword").value;
+      const newPassword = document.getElementById("newPassword").value;
+
+      const body = {};
+      if (name) body.name = name;
+      if (email) body.email = email;
+      if (newPassword) {
+        if (!currentPassword) {
+          return showMessage("Please enter current password to change password.", "error");
+        }
+        body.current_password = currentPassword;
+        body.new_password = newPassword;
+      }
+
+      const res = await fetch("/me/update", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify(body)
+      });
+
+      const msg = document.getElementById("msgBox");
+      if (res.ok) {
+        showMessage("✅ Profile updated successfully", "success");
+        document.getElementById("currentPassword").value = "";
+        document.getElementById("newPassword").value = "";
+      } else {
+        const data = await res.json();
+        showMessage(data.detail || "Something went wrong.", "error");
+      }
+    }
+
+    function showMessage(msg, type) {
+      const box = document.getElementById("msgBox");
+      box.textContent = msg;
+      box.className = "text-sm mb-4 " + (type === "success" ? "text-green-500" : "text-red-500");
+      box.classList.remove("hidden");
+    }
+  </script>
+</body>
+</html>
